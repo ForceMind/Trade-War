@@ -2,143 +2,183 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
 <title>Trade War｜总统贸易战原型</title>
 <style>
   :root{
     --bg:#0f1222; --panel:#171a2e; --muted:#8b92b7; --accent:#5ec7ff; --good:#3ad69b; --bad:#ff6b6b; --warn:#ffb020;
   }
   *{box-sizing:border-box}
+  html,body{height:100%}
   body{margin:0;background:linear-gradient(180deg,#0b0e1b,#0f1222 30%);color:#e9ecff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-  header{padding:14px 18px;border-bottom:1px solid #22284a;background:#121530;position:sticky;top:0;z-index:10}
-  header h1{margin:0;font-size:18px;letter-spacing:.5px}
+  header{padding:12px 14px;border-bottom:1px solid #22284a;background:#121530;position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;justify-content:space-between}
+  header h1{margin:0;font-size:16px;letter-spacing:.5px}
   header small{color:var(--muted)}
+  .h-actions{display:flex;gap:8px;align-items:center}
+  .tiny{font-size:12px;color:#b0b5e4}
+  .switch{display:inline-flex;gap:6px;align-items:center}
+  .switch input{accent-color:#5ec7ff}
 
   .wrap{display:grid;grid-template-columns: 280px 1fr 360px;gap:12px;padding:12px}
   .card{background:var(--panel);border:1px solid #20264a;border-radius:14px;box-shadow:0 6px 20px rgba(8,10,30,.35);overflow:hidden}
 
-  /* 左侧 国家列表 */
-  #countryPanel{display:flex;flex-direction:column;min-height:70vh}
+  /* 左侧 国家列表（桌面） */
+  #countryPanel{display:flex;flex-direction:column;min-height:70vh;position:relative;z-index:5}
   #countryHeader{padding:10px 12px;border-bottom:1px solid #22284a;display:flex;align-items:center;gap:8px}
-  #search{flex:1;background:#121530;border:1px solid #2a2f5a;color:#e9ecff;padding:8px 10px;border-radius:10px;outline:none}
-  #countryList{overflow:auto;max-height:calc(100vh - 160px);min-height:200px}
-  .row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px dashed #22284a;cursor:pointer}
+  #search{flex:1;background:#121530;border:1px solid #2a2f5a;color:#e9ecff;padding:10px 12px;border-radius:10px;outline:none}
+  #countryList{overflow:auto;max-height:calc(100vh - 160px);min-height:200px;-webkit-overflow-scrolling:touch}
+  .row{display:flex;align-items:center;gap:8px;padding:12px;border-bottom:1px dashed #22284a;cursor:pointer}
   .row:hover{background:#14193b}
-  .flag{width:8px;height:26px;border-radius:3px}
-  .nm{flex:1}
+  .flag{width:10px;height:28px;border-radius:3px}
+  .nm{flex:1;font-size:14px}
   .tag{font-size:12px;color:#c8ceff;opacity:.8}
-  .badge{font-size:11px;padding:2px 6px;border-radius:8px;border:1px solid #2b3160;color:#b6bcff;cursor:pointer}
+  .badge{font-size:11px;padding:2px 6px;border-radius:8px;border:1px solid #2b3160;color:#b6bcff;cursor:pointer;user-select:none}
   .badge.on{background:#1a1f43}
 
-  /* 中间 详情 + 操作 */
+  /* 中：详情与操作 */
   #center{display:flex;flex-direction:column;gap:12px}
   .kpis{display:grid;grid-template-columns: repeat(6,1fr);gap:8px;padding:10px;border-bottom:1px solid #22284a;background:#121530}
-  .kpi{padding:8px 10px;border:1px solid #2a2f5a;border-radius:10px;text-align:center}
+  .kpi{padding:10px 12px;border:1px solid #2a2f5a;border-radius:10px;text-align:center}
   .kpi .v{font-weight:700;font-size:18px}
   .kpi .t{font-size:12px;color:var(--muted)}
   #detail{padding:12px}
   #detail h2{margin:4px 0 8px 0;font-size:18px}
   .grid{display:grid;grid-template-columns: repeat(3,1fr);gap:8px}
-  .field{background:#121530;border:1px solid #2a2f5a;border-radius:10px;padding:8px}
+  .field{background:#121530;border:1px solid #2a2f5a;border-radius:10px;padding:10px}
   .field .k{font-size:12px;color:var(--muted)}
   .field .v{font-size:15px;font-weight:600}
   .ops{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  .btn{border:1px solid #2a2f5a;background:#1a1f43;color:#e9ecff;padding:10px 12px;border-radius:10px;cursor:pointer}
+  .btn{border:1px solid #2a2f5a;background:#1a1f43;color:#e9ecff;padding:12px;border-radius:12px;cursor:pointer}
   .btn:hover{filter:brightness(1.08)}
   .btn.good{border-color:#1e6a52;background:#124236}
   .btn.warn{border-color:#7a5806;background:#40310f}
   .btn.bad{border-color:#6a1e1e;background:#421212}
-  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
 
-  /* 右侧 日志与回合 */
+  /* 右：日志与回合 */
   #right{display:flex;flex-direction:column;min-height:70vh}
   #turnBar{padding:10px;border-bottom:1px solid #22284a;display:flex;gap:8px;align-items:center;justify-content:space-between;background:#121530}
-  #log{padding:10px;overflow:auto;max-height:calc(100vh - 170px);line-height:1.35}
+  #log{padding:10px;overflow:auto;max-height:calc(100vh - 170px);line-height:1.35;-webkit-overflow-scrolling:touch}
   .logline{opacity:.95;margin:6px 0}
   .plus{color:var(--good)} .minus{color:var(--bad)}
   .hint{color:var(--muted);font-size:12px}
-  .pill{font-size:12px;padding:2px 8px;border:1px solid #2a2f5a;border-radius:999px}
+  .pill{font-size:12px;padding:4px 10px;border:1px solid #2a2f5a;border-radius:999px}
 
-  /* 事件弹窗 */
-  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,7,20,.6)}
-  .modal-inner{width:min(760px,92vw);background:#151939;border:1px solid #273064;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.45);overflow:hidden}
-  .modal-head{padding:12px 14px;border-bottom:1px solid #273064;display:flex;justify-content:space-between;align-items:center}
+  /* 遮罩与弹窗（修复点击穿透 & 手机底部弹窗） */
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,7,20,.65);z-index:50}
+  .modal.show{display:flex}
+  .modal-inner{width:min(820px,92vw);max-height:90vh;background:#151939;border:1px solid #273064;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.45);overflow:auto}
+  .modal-head{padding:12px 14px;border-bottom:1px solid #273064;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#151939;z-index:1}
   .modal-title{font-size:16px;font-weight:700}
   .modal-body{padding:14px}
-  .opts{display:flex;flex-direction:column;gap:8px;margin-top:10px}
-  .opt{border:1px solid #2a2f5a;background:#1a1f43;border-radius:10px;padding:10px;cursor:pointer}
-  .opt:hover{filter:brightness(1.07)}
+  .opts{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+  .opt{border:1px solid #2a2f5a;background:#1a1f43;border-radius:12px;padding:12px;cursor:pointer;line-height:1.45}
+  .opt:active{transform:scale(.99)}
   .closeX{cursor:pointer;color:#9aa1d9}
-  .preview{font-size:12px;color:#b8bee9;margin-top:6px}
-  .footer{padding:10px 14px;border-top:1px solid #273064;display:flex;justify-content:flex-end;gap:8px}
-  .small{font-size:12px;color:#b0b5e4}
+  .footer{padding:10px 14px;border-top:1px solid #273064;display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:#151939}
+
+  /* 结局弹窗 */
   .endwrap{padding:18px;text-align:center}
   .titlebig{font-size:22px;margin:8px 0}
   .subtitle{color:#b6bcff}
+
+  /* 手机适配：布局栅格改为 1 列 + 抽屉国家列表 + 底部弹窗 */
+  #toggleCountries{display:none}
+
+  @media (max-width: 860px){
+    .wrap{grid-template-columns: 1fr; gap:10px; padding:10px}
+    #right{order:3}
+    #center{order:2}
+    /* 抽屉 */
+    #countryPanel{
+      position:fixed; top:0; left:0; height:100vh; width:86vw;
+      transform:translateX(-100%); transition:transform .28s ease;
+      border-radius:0; border-right:1px solid #20264a; z-index:40
+    }
+    body.drawer-open #countryPanel{ transform:translateX(0) }
+    .scrim{position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; z-index:30}
+    body.drawer-open .scrim{display:block}
+    /* 顶部按钮 */
+    #toggleCountries{display:inline-flex}
+    /* KPI 更紧凑 */
+    .kpis{grid-template-columns: repeat(2,1fr)}
+    .grid{grid-template-columns: repeat(2,1fr)}
+    .btn{padding:12px}
+    /* 事件做成 Bottom Sheet */
+    .modal-inner{width:100%; max-height:80vh; position:fixed; bottom:0; left:0; right:0; border-radius:16px 16px 0 0}
+  }
 </style>
 </head>
 <body>
 <header>
-  <h1>Trade War <small>｜总统贸易战原型 v0.2</small></h1>
+  <button class="btn" id="toggleCountries">国家</button>
+  <h1>Trade War <small>｜v0.4 移动端适配 & 事件推进</small></h1>
+  <div class="h-actions">
+    <label class="switch tiny">
+      <input type="checkbox" id="autoTurn">
+      ⏱ 自动回合
+    </label>
+    <button class="btn" id="btnEnd">结束回合</button>
+    <button class="btn warn" id="btnRestart">重开</button>
+  </div>
 </header>
 
+<div class="scrim" id="scrim"></div>
+
 <div class="wrap">
-  <!-- 左：国家列表 -->
-  <div class="card" id="countryPanel">
+  <!-- 左：国家抽屉 / 桌面侧栏 -->
+  <aside class="card" id="countryPanel" aria-label="国家列表">
     <div id="countryHeader">
-      <input id="search" placeholder="搜索国家..." />
+      <input id="search" placeholder="搜索国家…" />
       <span class="badge" id="partnerBadge" title="切换仅看主要伙伴">主要伙伴</span>
     </div>
     <div id="countryList"></div>
-  </div>
+  </aside>
 
   <!-- 中：详情与操作 -->
-  <div class="card" id="center">
+  <main class="card" id="center">
     <div class="kpis" id="kpis"></div>
     <div id="detail">
       <h2>请选择左侧的国家</h2>
-      <div class="hint">在下方进行操作：加关税、秘密谈判、舆论战、军事威慑。结束回合后会触发事件与经济结算。</div>
+      <div class="hint">操作：加关税、秘密谈判、舆论战、军事威慑。结束回合后将触发事件与经济结算。</div>
       <div class="ops" id="ops" style="margin-top:14px"></div>
     </div>
-  </div>
+  </main>
 
   <!-- 右：日志与回合 -->
-  <div class="card" id="right">
+  <section class="card" id="right">
     <div id="turnBar">
       <div>
         <span class="pill">回合 <b id="turn">1</b></span>
         <span class="pill" style="margin-left:6px">AP <b id="ap">3</b></span>
         <span class="pill" style="margin-left:6px">DP <b id="dp">2</b></span>
       </div>
-      <div>
-        <button class="btn" id="btnEnd">结束回合</button>
-        <button class="btn warn" id="btnRestart">重开</button>
-      </div>
+      <div class="tiny">提示：移动端点左上角“国家”打开列表</div>
     </div>
     <div id="log"></div>
-  </div>
+  </section>
 </div>
 
 <!-- 事件弹窗 -->
-<div class="modal" id="evtModal">
+<div class="modal" id="evtModal" aria-modal="true" role="dialog">
   <div class="modal-inner">
     <div class="modal-head">
       <div class="modal-title" id="evtTitle">事件标题</div>
       <div class="closeX" id="evtClose">✕</div>
     </div>
     <div class="modal-body">
-      <div id="evtDesc" class="small"></div>
-      <div id="evtTarget" class="small" style="margin-top:6px;opacity:.85"></div>
+      <div id="evtDesc" class="tiny"></div>
+      <div id="evtTarget" class="tiny" style="margin-top:6px;opacity:.85"></div>
       <div class="opts" id="evtOpts"></div>
     </div>
     <div class="footer">
-      <span class="small" id="evtTip">请选择一项以继续</span>
+      <span class="tiny" id="evtTip">请选择一项以继续</span>
     </div>
   </div>
 </div>
 
 <!-- 结局弹窗 -->
-<div class="modal" id="endModal">
+<div class="modal" id="endModal" aria-modal="true" role="dialog">
   <div class="modal-inner">
     <div class="endwrap">
       <div class="titlebig" id="endTitle">胜利！</div>
@@ -153,70 +193,47 @@
 
 <script>
 /* --------------------------
-   数据：国家（24个）
+   基础数据（国家同前版本）
 ---------------------------*/
-const DATA = {
-  countries: [
-    {"name":"United Kingdom","code":"UK","region":"Europe","is_major_partner":true,"tariff":8,"attitude":65,"regime":"Democracy","military":70,"stability":80,"trade_with_us":75,"resources":["finance","aero"],"alliances":["NATO","G7"]},
-    {"name":"Germany","code":"DE","region":"Europe","is_major_partner":true,"tariff":9,"attitude":60,"regime":"Democracy","military":55,"stability":85,"trade_with_us":85,"resources":["auto","chem"],"alliances":["EU","NATO","G7"]},
-    {"name":"France","code":"FR","region":"Europe","is_major_partner":true,"tariff":10,"attitude":58,"regime":"Democracy","military":65,"stability":82,"trade_with_us":70,"resources":["aero","nuclear"],"alliances":["EU","NATO","G7"]},
-    {"name":"Italy","code":"IT","region":"Europe","is_major_partner":true,"tariff":8,"attitude":55,"regime":"Democracy","military":50,"stability":78,"trade_with_us":60,"resources":["fashion","machinery"],"alliances":["EU","NATO","G7"]},
-    {"name":"Canada","code":"CA","region":"North America","is_major_partner":true,"tariff":6,"attitude":70,"regime":"Democracy","military":45,"stability":88,"trade_with_us":90,"resources":["oil","agri","mineral"],"alliances":["USMCA","NATO","G7"]},
-    {"name":"Mexico","code":"MX","region":"North America","is_major_partner":true,"tariff":7,"attitude":52,"regime":"Democracy","military":40,"stability":70,"trade_with_us":88,"resources":["agri","auto"],"alliances":["USMCA"]},
-    {"name":"China","code":"CN","region":"Asia","is_major_partner":true,"tariff":12,"attitude":35,"regime":"Authoritarian","military":85,"stability":85,"trade_with_us":100,"resources":["electronics","rare_earth"],"alliances":["BRICS"]},
-    {"name":"Japan","code":"JP","region":"Asia","is_major_partner":true,"tariff":5,"attitude":68,"regime":"Democracy","military":60,"stability":90,"trade_with_us":78,"resources":["electronics","auto"],"alliances":["US_ally","G7"]},
-    {"name":"South Korea","code":"KR","region":"Asia","is_major_partner":true,"tariff":6,"attitude":62,"regime":"Democracy","military":70,"stability":86,"trade_with_us":74,"resources":["chips","ship"],"alliances":["US_ally"]},
-    {"name":"India","code":"IN","region":"Asia","is_major_partner":true,"tariff":14,"attitude":50,"regime":"Democracy","military":75,"stability":78,"trade_with_us":68,"resources":["pharma","it","agri"],"alliances":["BRICS","Quad?"]},
-    {"name":"Vietnam","code":"VN","region":"Asia","is_major_partner":false,"tariff":9,"attitude":58,"regime":"One-party","military":45,"stability":80,"trade_with_us":55,"resources":["electronics","textile"],"alliances":[]},
-    {"name":"Thailand","code":"TH","region":"Asia","is_major_partner":false,"tariff":8,"attitude":56,"regime":"Hybrid","military":40,"stability":75,"trade_with_us":40,"resources":["agri","auto_parts"],"alliances":[]},
-    {"name":"Malaysia","code":"MY","region":"Asia","is_major_partner":false,"tariff":8,"attitude":57,"regime":"Democracy","military":35,"stability":77,"trade_with_us":42,"resources":["chips","palm_oil"],"alliances":[]},
-    {"name":"Indonesia","code":"ID","region":"Asia","is_major_partner":false,"tariff":10,"attitude":55,"regime":"Democracy","military":45,"stability":72,"trade_with_us":38,"resources":["nickel","agri"],"alliances":["ASEAN"]},
-    {"name":"Philippines","code":"PH","region":"Asia","is_major_partner":false,"tariff":9,"attitude":54,"regime":"Democracy","military":35,"stability":65,"trade_with_us":28,"resources":["bpo","agri"],"alliances":["US_ally"]},
-    {"name":"Brazil","code":"BR","region":"South America","is_major_partner":true,"tariff":13,"attitude":50,"regime":"Democracy","military":55,"stability":70,"trade_with_us":52,"resources":["agri","mineral","oil"],"alliances":["BRICS","Mercosur"]},
-    {"name":"Argentina","code":"AR","region":"South America","is_major_partner":false,"tariff":12,"attitude":48,"regime":"Democracy","military":30,"stability":55,"trade_with_us":22,"resources":["agri","lithium"],"alliances":["Mercosur"]},
-    {"name":"Chile","code":"CL","region":"South America","is_major_partner":false,"tariff":6,"attitude":60,"regime":"Democracy","military":30,"stability":82,"trade_with_us":20,"resources":["copper","lithium"],"alliances":[]},
-    {"name":"Peru","code":"PE","region":"South America","is_major_partner":false,"tariff":7,"attitude":55,"regime":"Democracy","military":30,"stability":60,"trade_with_us":18,"resources":["copper","agri"],"alliances":[]},
-    {"name":"Russia","code":"RU","region":"Europe/Asia","is_major_partner":true,"tariff":15,"attitude":20,"regime":"Authoritarian","military":90,"stability":70,"trade_with_us":35,"resources":["oil","gas","mineral"],"alliances":["BRICS"]},
-    {"name":"Turkey","code":"TR","region":"Europe/Asia","is_major_partner":false,"tariff":10,"attitude":45,"regime":"Hybrid","military":65,"stability":60,"trade_with_us":32,"resources":["textile","machinery"],"alliances":["NATO?"]},
-    {"name":"Saudi Arabia","code":"SA","region":"Middle East","is_major_partner":true,"tariff":5,"attitude":55,"regime":"Monarchy","military":60,"stability":80,"trade_with_us":58,"resources":["oil"],"alliances":["OPEC"]},
-    {"name":"UAE","code":"AE","region":"Middle East","is_major_partner":false,"tariff":4,"attitude":62,"regime":"Monarchy","military":50,"stability":85,"trade_with_us":26,"resources":["oil","finance"],"alliances":["OPEC"]},
-    {"name":"Israel","code":"IL","region":"Middle East","is_major_partner":false,"tariff":4,"attitude":70,"regime":"Democracy","military":80,"stability":75,"trade_with_us":30,"resources":["tech","defense"],"alliances":["US_ally"]},
-    {"name":"Australia","code":"AU","region":"Oceania","is_major_partner":true,"tariff":5,"attitude":66,"regime":"Democracy","military":55,"stability":88,"trade_with_us":44,"resources":["iron","lithium","agri"],"alliances":["US_ally","Quad?"]}
-  ]
-};
+const DATA = { countries: [
+  {"name":"United Kingdom","code":"UK","region":"Europe","is_major_partner":true,"tariff":8,"attitude":65,"regime":"Democracy","military":70,"stability":80,"trade_with_us":75,"resources":["finance","aero"],"alliances":["NATO","G7"]},
+  {"name":"Germany","code":"DE","region":"Europe","is_major_partner":true,"tariff":9,"attitude":60,"regime":"Democracy","military":55,"stability":85,"trade_with_us":85,"resources":["auto","chem"],"alliances":["EU","NATO","G7"]},
+  {"name":"France","code":"FR","region":"Europe","is_major_partner":true,"tariff":10,"attitude":58,"regime":"Democracy","military":65,"stability":82,"trade_with_us":70,"resources":["aero","nuclear"],"alliances":["EU","NATO","G7"]},
+  {"name":"Italy","code":"IT","region":"Europe","is_major_partner":true,"tariff":8,"attitude":55,"regime":"Democracy","military":50,"stability":78,"trade_with_us":60,"resources":["fashion","machinery"],"alliances":["EU","NATO","G7"]},
+  {"name":"Canada","code":"CA","region":"North America","is_major_partner":true,"tariff":6,"attitude":70,"regime":"Democracy","military":45,"stability":88,"trade_with_us":90,"resources":["oil","agri","mineral"],"alliances":["USMCA","NATO","G7"]},
+  {"name":"Mexico","code":"MX","region":"North America","is_major_partner":true,"tariff":7,"attitude":52,"regime":"Democracy","military":40,"stability":70,"trade_with_us":88,"resources":["agri","auto"],"alliances":["USMCA"]},
+  {"name":"China","code":"CN","region":"Asia","is_major_partner":true,"tariff":12,"attitude":35,"regime":"Authoritarian","military":85,"stability":85,"trade_with_us":100,"resources":["electronics","rare_earth"],"alliances":["BRICS"]},
+  {"name":"Japan","code":"JP","region":"Asia","is_major_partner":true,"tariff":5,"attitude":68,"regime":"Democracy","military":60,"stability":90,"trade_with_us":78,"resources":["electronics","auto"],"alliances":["US_ally","G7"]},
+  {"name":"South Korea","code":"KR","region":"Asia","is_major_partner":true,"tariff":6,"attitude":62,"regime":"Democracy","military":70,"stability":86,"trade_with_us":74,"resources":["chips","ship"],"alliances":["US_ally"]},
+  {"name":"India","code":"IN","region":"Asia","is_major_partner":true,"tariff":14,"attitude":50,"regime":"Democracy","military":75,"stability":78,"trade_with_us":68,"resources":["pharma","it","agri"],"alliances":["BRICS","Quad?"]},
+  {"name":"Vietnam","code":"VN","region":"Asia","is_major_partner":false,"tariff":9,"attitude":58,"regime":"One-party","military":45,"stability":80,"trade_with_us":55,"resources":["electronics","textile"],"alliances":[]},
+  {"name":"Thailand","code":"TH","region":"Asia","is_major_partner":false,"tariff":8,"attitude":56,"regime":"Hybrid","military":40,"stability":75,"trade_with_us":40,"resources":["agri","auto_parts"],"alliances":[]},
+  {"name":"Malaysia","code":"MY","region":"Asia","is_major_partner":false,"tariff":8,"attitude":57,"regime":"Democracy","military":35,"stability":77,"trade_with_us":42,"resources":["chips","palm_oil"],"alliances":[]},
+  {"name":"Indonesia","code":"ID","region":"Asia","is_major_partner":false,"tariff":10,"attitude":55,"regime":"Democracy","military":45,"stability":72,"trade_with_us":38,"resources":["nickel","agri"],"alliances":["ASEAN"]},
+  {"name":"Philippines","code":"PH","region":"Asia","is_major_partner":false,"tariff":9,"attitude":54,"regime":"Democracy","military":35,"stability":65,"trade_with_us":28,"resources":["bpo","agri"],"alliances":["US_ally"]},
+  {"name":"Brazil","code":"BR","region":"South America","is_major_partner":true,"tariff":13,"attitude":50,"regime":"Democracy","military":55,"stability":70,"trade_with_us":52,"resources":["agri","mineral","oil"],"alliances":["BRICS","Mercosur"]},
+  {"name":"Argentina","code":"AR","region":"South America","is_major_partner":false,"tariff":12,"attitude":48,"regime":"Democracy","military":30,"stability":55,"trade_with_us":22,"resources":["agri","lithium"],"alliances":["Mercosur"]},
+  {"name":"Chile","code":"CL","region":"South America","is_major_partner":false,"tariff":6,"attitude":60,"regime":"Democracy","military":30,"stability":82,"trade_with_us":20,"resources":["copper","lithium"],"alliances":[]},
+  {"name":"Peru","code":"PE","region":"South America","is_major_partner":false,"tariff":7,"attitude":55,"regime":"Democracy","military":30,"stability":60,"trade_with_us":18,"resources":["copper","agri"],"alliances":[]},
+  {"name":"Russia","code":"RU","region":"Europe/Asia","is_major_partner":true,"tariff":15,"attitude":20,"regime":"Authoritarian","military":90,"stability":70,"trade_with_us":35,"resources":["oil","gas","mineral"],"alliances":["BRICS"]},
+  {"name":"Turkey","code":"TR","region":"Europe/Asia","is_major_partner":false,"tariff":10,"attitude":45,"regime":"Hybrid","military":65,"stability":60,"trade_with_us":32,"resources":["textile","machinery"],"alliances":["NATO?"]},
+  {"name":"Saudi Arabia","code":"SA","region":"Middle East","is_major_partner":true,"tariff":5,"attitude":55,"regime":"Monarchy","military":60,"stability":80,"trade_with_us":58,"resources":["oil"],"alliances":["OPEC"]},
+  {"name":"UAE","code":"AE","region":"Middle East","is_major_partner":false,"tariff":4,"attitude":62,"regime":"Monarchy","military":50,"stability":85,"trade_with_us":26,"resources":["oil","finance"],"alliances":["OPEC"]},
+  {"name":"Israel","code":"IL","region":"Middle East","is_major_partner":false,"tariff":4,"attitude":70,"regime":"Democracy","military":80,"stability":75,"trade_with_us":30,"resources":["tech","defense"],"alliances":["US_ally"]},
+  {"name":"Australia","code":"AU","region":"Oceania","is_major_partner":true,"tariff":5,"attitude":66,"regime":"Democracy","military":55,"stability":88,"trade_with_us":44,"resources":["iron","lithium","agri"],"alliances":["US_ally","Quad?"]}
+]};
 
 /* --------------------------
-   全局状态
+   全局状态（含五系链进度）——与 v0.3 相同
 ---------------------------*/
 const INITIAL = {
-  Support:55,
-  IntlHate:20,
-  US_GDP_Growth:0.7,
-  Unemployment:4.0,
-  MarketStress:18,
-  AP:3, DP:2,
-  turn:1,
-  assassBase:0,
-  impeachProgress:0,
-  gdpNegStreak:0,
+  Support:55, IntlHate:20, US_GDP_Growth:0.7, Unemployment:4.0, MarketStress:18,
+  AP:3, DP:2, turn:1, assassBase:0, impeachProgress:0, gdpNegStreak:0,
+  arcEnergy:0, arcTech:0, arcFood:0, arcShipping:0, arcFinance:0
 };
-let state = null;
-let countries = [];
-let selected = null;
-let logEl, listEl, kpiEl, turnEl, apEl, dpEl, evtModal, endModal;
 
-/* --------------------------
-   工具函数
----------------------------*/
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
-const pickWeighted = (arr, getW) => {
-  let sum = arr.reduce((s,x)=>s+Math.max(0,getW(x)),0);
-  if(sum<=0) return null;
-  let r = Math.random()*sum, acc=0;
-  for(const x of arr){ acc += Math.max(0,getW(x)); if(r<=acc) return x; }
-  return arr[arr.length-1];
-};
 const fmtPct = v => (v>=0?'+':'') + v.toFixed(1) + '%';
 const colorTariff = t=>{
   if(t<20) return '#3ad69b';
@@ -225,6 +242,18 @@ const colorTariff = t=>{
   if(t<80) return '#ff8859';
   return '#ff6b6b';
 };
+const pickWeighted = (arr, getW) => {
+  let sum = arr.reduce((s,x)=>s+Math.max(0,getW(x)),0);
+  if(sum<=0) return null;
+  let r = Math.random()*sum, acc=0;
+  for(const x of arr){ acc += Math.max(0,getW(x)); if(r<=acc) return x; }
+  return arr[arr.length-1];
+};
+
+let state, countries, selected;
+let logEl, listEl, kpiEl, turnEl, apEl, dpEl, evtModal, endModal, evtInner;
+let autoTimer = null;
+
 function log(msg){
   const line = document.createElement('div');
   line.className='logline';
@@ -233,28 +262,27 @@ function log(msg){
 }
 
 /* --------------------------
-   初始化 & 渲染（修复：确保 DOM 就绪后再渲染）
+   初始化 & 渲染
 ---------------------------*/
 function resetGame(){
   state = JSON.parse(JSON.stringify(INITIAL));
-  countries = JSON.parse(JSON.stringify(DATA.countries)).map(c=>({
-    ...c, _recentTariffUp:0, _cooldowns:{}, _marked:false
-  }));
+  countries = JSON.parse(JSON.stringify(DATA.countries)).map(c=>({...c, _recentTariffUp:0, _cooldowns:{}, _marked:false}));
   selected = null;
-  // 清空搜索与伙伴过滤，避免空列表
-  const search = document.getElementById('search');
-  if (search) search.value = '';
-  const badge = document.getElementById('partnerBadge');
-  if (badge) badge.classList.remove('on');
-
+  document.getElementById('search').value = '';
+  document.getElementById('partnerBadge').classList.remove('on');
   renderAll();
-  log('<b>新局开始：</b> 你就任美国总统，目标是让主要贸易伙伴平均关税 ≥ 50%。保持国内支持率与经济稳定。');
+  log('<b>新局开始：</b> 目标：主要伙伴平均关税 ≥ 50%，且支持率与经济不崩。');
 }
 
 function renderAll(){
   renderKPIs();
   renderCountryList();
   renderDetail();
+}
+
+function averageTariffMajor(){
+  const arr = countries.filter(c=>c.is_major_partner);
+  return arr.reduce((s,c)=>s+c.tariff,0)/arr.length;
 }
 
 function renderKPIs(){
@@ -270,58 +298,37 @@ function renderKPIs(){
   turnEl.textContent = state.turn;
   apEl.textContent = state.AP;
   dpEl.textContent = state.DP;
-  function kpi(title,val,cls=''){
-    return `<div class="kpi ${cls}"><div class="v">${val}</div><div class="t">${title}</div></div>`;
-  }
+  function kpi(title,val,cls=''){ return `<div class="kpi ${cls}"><div class="v">${val}</div><div class="t">${title}</div></div>`; }
 }
 
 function renderCountryList(){
-  const searchEl = document.getElementById('search');
-  const q = (searchEl && typeof searchEl.value==='string') ? searchEl.value.toLowerCase() : '';
-  const onlyMajor = document.getElementById('partnerBadge')?.classList.contains('on') || false;
-
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  const onlyMajor = document.getElementById('partnerBadge').classList.contains('on');
   const arr = countries
     .filter(c => (!onlyMajor || c.is_major_partner))
-    .filter(c => {
-      if(!q) return true;
-      const name = (c.name || '').toLowerCase();
-      const code = (c.code || '').toLowerCase();
-      return name.indexOf(q)>=0 || code.indexOf(q)>=0;
-    });
+    .filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q));
 
   listEl.innerHTML = '';
   arr.forEach(c=>{
     const row = document.createElement('div');
-    row.className = 'row';
-    row.onclick = ()=>{ selected=c; renderDetail(); };
-    const f = document.createElement('div');
-    f.className='flag';
-    f.style.background = colorTariff(c.tariff);
-    const nm = document.createElement('div');
-    nm.className='nm';
-    nm.innerHTML = `<b>${c.name}</b> <span class="tag">(${c.code})</span>`;
-    const r = document.createElement('div');
-    r.innerHTML = `<span class="badge" title="对美关税">${c.tariff}%</span>`;
-    row.appendChild(f); row.appendChild(nm); row.appendChild(r);
-    listEl.appendChild(row);
+    row.className='row';
+    row.addEventListener('click', ()=>{ selected=c; renderDetail(); if (document.body.classList.contains('drawer-open')) toggleDrawer(false); }, {passive:true});
+    const f = document.createElement('div'); f.className='flag'; f.style.background=colorTariff(c.tariff);
+    const nm = document.createElement('div'); nm.className='nm'; nm.innerHTML = `<b>${c.name}</b> <span class="tag">(${c.code})</span>`;
+    const r = document.createElement('div'); r.innerHTML = `<span class="badge" title="对美关税">${c.tariff}%</span>`;
+    row.appendChild(f); row.appendChild(nm); row.appendChild(r); listEl.appendChild(row);
   });
-
-  // 如果筛选后为空，给出提示
   if(arr.length===0){
-    const empty = document.createElement('div');
-    empty.className='row';
-    empty.style.opacity=.7;
-    empty.textContent='（没有匹配的国家）';
-    listEl.appendChild(empty);
+    const empty=document.createElement('div'); empty.className='row'; empty.style.opacity=.7; empty.textContent='（没有匹配的国家）'; listEl.appendChild(empty);
   }
 }
 
 function renderDetail(){
-  const d = document.querySelector('#detail');
+  const d = document.getElementById('detail');
   if(!selected){
     d.innerHTML = `
       <h2>请选择左侧的国家</h2>
-      <div class="hint">在下方进行操作：加关税、秘密谈判、舆论战、军事威慑。结束回合后会触发事件与经济结算。</div>
+      <div class="hint">操作：加关税、秘密谈判、舆论战、军事威慑。结束回合后触发事件与结算。</div>
       <div class="ops" id="ops" style="margin-top:14px"></div>
     `;
     return;
@@ -339,15 +346,15 @@ function renderDetail(){
     <div class="ops" id="ops"></div>
   `;
   const opsEl = d.querySelector('#ops');
-  opsEl.appendChild(btn('加关税 +5', ()=>actRaiseTariff(5), ''));
-  opsEl.appendChild(btn('加关税 +10', ()=>actRaiseTariff(10), ''));
-  opsEl.appendChild(btn('秘密谈判（DP2）', actNegotiate, ''));
+  opsEl.appendChild(btn('加关税 +5', ()=>actRaiseTariff(5)));
+  opsEl.appendChild(btn('加关税 +10', ()=>actRaiseTariff(10)));
+  opsEl.appendChild(btn('秘密谈判（DP2）', actNegotiate));
   opsEl.appendChild(btn('舆论战（AP1）', actPropaganda, 'warn'));
   opsEl.appendChild(btn('军事威慑（AP1）', actThreaten, 'bad'));
   setOpsDisabled();
 
   function fld(k,v){ return `<div class="field"><div class="k">${k}</div><div class="v">${v}</div></div>`;}
-  function btn(txt,fn,cls){ const b=document.createElement('button'); b.className='btn '+cls; b.textContent=txt; b.onclick=fn; return b;}
+  function btn(txt,fn,cls=''){ const b=document.createElement('button'); b.className='btn '+cls; b.textContent=txt; b.addEventListener('click', fn, {passive:true}); return b;}
 }
 
 function setOpsDisabled(){
@@ -391,14 +398,14 @@ function actPropaganda(){
   state.Support = clamp(state.Support + 5, 0, 100);
   state.IntlHate = clamp(state.IntlHate + 6, 0, 100);
   state.MarketStress = clamp(state.MarketStress + 4, 0, 100);
-  log(`发动舆论战：<span class="plus">支持率+5</span>，<span class="minus">国际仇恨+6</span>，市场紧张上升。`);
+  log(`发动舆论战：<span class="plus">支持率+5</span>，<span class="minus">国际仇恨+6</span>。`);
   renderAll();
   checkImmediate();
 }
 function actThreaten(){
   if(state.AP<=0) return;
   state.AP -= 1;
-  selected._marked = true; // 事件权重减半一次
+  selected._marked = true;
   state.IntlHate = clamp(state.IntlHate + 10, 0, 100);
   log(`对 <b>${selected.name}</b> 进行军事威慑，短期报复降低，但 <span class="minus">国际仇恨+10</span>。`);
   renderAll();
@@ -406,11 +413,65 @@ function actThreaten(){
 }
 
 /* --------------------------
-   回合结束
+   回合推进（手动/自动）
 ---------------------------*/
-document.querySelector('#btnEnd').onclick = endTurn;
+document.addEventListener('DOMContentLoaded', ()=>{
+  listEl = document.querySelector('#countryList');
+  kpiEl = document.querySelector('#kpis');
+  logEl = document.querySelector('#log');
+  turnEl = document.querySelector('#turn');
+  apEl = document.querySelector('#ap');
+  dpEl = document.querySelector('#dp');
+  evtModal = document.querySelector('#evtModal');
+  evtInner = evtModal.querySelector('.modal-inner');
+  endModal = document.querySelector('#endModal');
 
+  document.getElementById('partnerBadge').onclick = (e)=>{ e.target.classList.toggle('on'); e.target.textContent = e.target.classList.contains('on')? '仅看主要伙伴' : '主要伙伴'; renderCountryList(); };
+  document.getElementById('search').addEventListener('input', renderCountryList, {passive:true});
+  document.getElementById('btnRestart').onclick = ()=>{ closeAllModals(); resetGame(); };
+  document.getElementById('again').onclick = ()=>{ closeAllModals(); resetGame(); };
+  document.getElementById('seeLog').onclick = ()=>{ closeAllModals(); };
+  document.getElementById('btnEnd').onclick = endTurn;
+
+  document.getElementById('toggleCountries').onclick = ()=> toggleDrawer();
+  document.getElementById('scrim').onclick = ()=> toggleDrawer(false);
+
+  // 事件弹窗关闭（修复：确保遮罩 display:none，避免挡住点击）
+  document.getElementById('evtClose').onclick = ()=> closeEventModal();
+  evtModal.addEventListener('click', (e)=>{ if(e.target === evtModal){ closeEventModal(); } });
+
+  // 自动回合
+  document.getElementById('autoTurn').addEventListener('change', (e)=>{
+    if(e.target.checked){ startAutoTurn(); } else { stopAutoTurn(); }
+  });
+
+  // 页面可见性变化，暂停自动回合
+  document.addEventListener('visibilitychange', ()=>{ if(document.hidden) stopAutoTurn(); else if(document.getElementById('autoTurn').checked) startAutoTurn(); });
+
+  resetGame();
+});
+
+function startAutoTurn(){
+  stopAutoTurn();
+  autoTimer = setInterval(()=>{
+    if(!isAnyModalOpen()) endTurn();
+  }, 6000);
+}
+function stopAutoTurn(){ if(autoTimer){ clearInterval(autoTimer); autoTimer=null; } }
+function isAnyModalOpen(){ return evtModal.classList.contains('show') || endModal.classList.contains('show'); }
+
+function toggleDrawer(force){
+  const open = typeof force==='boolean'? force : !document.body.classList.contains('drawer-open');
+  document.body.classList.toggle('drawer-open', open);
+}
+
+/* --------------------------
+   事件阶段 & 经济/风控
+---------------------------*/
 function endTurn(){
+  // 防重入
+  if(isAnyModalOpen()) return;
+
   const evtCount = rnd(1,2);
   let chain = Promise.resolve();
   const cats = computeEventWeights();
@@ -422,8 +483,7 @@ function endTurn(){
     applyAssassination();
     applyImpeachment();
     state.turn += 1;
-    state.AP = 3;
-    state.DP = 2;
+    state.AP = 3; state.DP = 2;
     countries.forEach(c=>{
       c._recentTariffUp = Math.max(0, c._recentTariffUp - 5);
       for(const k in c._cooldowns){ c._cooldowns[k] = Math.max(0, c._cooldowns[k]-1); }
@@ -436,199 +496,152 @@ function endTurn(){
 
 function computeEventWeights(){
   const avgTar = averageTariffMajor();
-  const w_domestic = clamp(0.3 + state.MarketStress/200 + Math.max(0, -state.US_GDP_Growth)/10, 0.1, 0.6);
-  const w_international = clamp(0.3 + state.IntlHate/200 + avgTar/200, 0.1, 0.7);
+  const w_domestic = clamp(0.25 + state.MarketStress/200 + Math.max(0, -state.US_GDP_Growth)/10, 0.1, 0.6);
+  const w_international = clamp(0.25 + state.IntlHate/200 + avgTar/200, 0.1, 0.7);
   const w_security = clamp(0.1 + state.IntlHate/300, 0.05, 0.4);
   const w_diplomatic = clamp(0.2 + state.DP/50 - state.IntlHate/300, 0.05, 0.5);
   const w_un = clamp(0.05 + state.IntlHate/400, 0.02, 0.25);
   return {Domestic:w_domestic, International:w_international, Security:w_security, Diplomatic:w_diplomatic, UN:w_un};
 }
 
-function averageTariffMajor(){
-  const arr = countries.filter(c=>c.is_major_partner);
-  return arr.reduce((s,c)=>s+c.tariff,0)/arr.length;
-}
-
-/* --------------------------
-   事件库（扩充版）
----------------------------*/
-const EVENT_POOL = [
-  // === Domestic 国内 ===
-  {
-    cat:'Domestic', id:'congress_hearing', title:'国会质询关税政策',
-    desc:'反对党要求你解释全球加税的合理性与法律依据。',
+/* ===== 事件库（基础 + 五系链，同 v0.3，略有整理） ===== */
+const BASE_EVENTS = [
+  {cat:'Domestic', id:'congress_hearing', title:'国会质询关税政策', desc:'反对党要求你解释全球加税的合理性与法律依据。',
     opts:[
       {txt:'强硬回怼', eff: s=>{ s.Support+=5; s.IntlHate+=6; s.MarketStress+=4; }},
       {txt:'技术性应对', eff: s=>{ s.Support-=2; s.DP=(s.DP||0)+1; s.MarketStress=Math.max(0,s.MarketStress-2); }},
       {txt:'拉拢关键议员（AP1,DP1）', cond: s=> s.AP>0 && s.DP>0, eff: s=>{ s.AP-=1; s.DP-=1; s.Support+=3; s._impeachShield=3; }}
-    ]
-  },
-  {
-    cat:'Domestic', id:'wall_street_crash', title:'华尔街暴跌',
-    cond: s=> s.MarketStress>40 || s.US_GDP_Growth<0,
+    ]},
+  {cat:'Domestic', id:'wall_street_crash', title:'华尔街暴跌', cond: s=> s.MarketStress>40 || s.US_GDP_Growth<0,
     desc:'市场恐慌蔓延，分析师质疑贸易战对供应链的冲击。',
     opts:[
       {txt:'救市（AP2）', cond: s=> s.AP>=2, eff: s=>{ s.AP-=2; s.Support+=6; s.MarketStress=Math.max(0,s.MarketStress-12); }},
       {txt:'放任市场出清', eff: s=>{ s.Support-=8; s._policyBoostNext=(s._policyBoostNext||0)+0.4; }}
-    ]
-  },
-  {
-    cat:'Domestic', id:'inflation_spike', title:'通胀飙升',
-    cond: s=> s.US_GDP_Growth>0 || s.MarketStress>25,
-    desc:'生活必需品价格走高，选民抱怨买不起日用品。',
-    opts:[
-      {txt:'释放战略库存', eff:s=>{ s.Support+=3; s.MarketStress=Math.max(0,s.MarketStress-3); }},
-      {txt:'施压零售商降价（AP1）', cond:s=>s.AP>=1, eff:s=>{ s.AP-=1; s.Support+=2; }},
-      {txt:'甩锅国外供给', eff:s=>{ s.Support+=1; s.IntlHate+=4; }}
-    ]
-  },
-  {
-    cat:'Domestic', id:'labor_strike', title:'港口工会罢工',
-    desc:'西海岸港口工会要求提高薪资，影响进出口通关。',
-    opts:[
-      {txt:'仲裁（DP1）', cond:s=>s.DP>=1, eff:s=>{ s.DP-=1; s.Support+=2; s.MarketStress-=2; }},
-      {txt:'强硬干预（AP1）', cond:s=>s.AP>=1, eff:s=>{ s.AP-=1; s.Support-=2; s.MarketStress-=4; }},
-      {txt:'任其发酵', eff:s=>{ s.Support-=4; s.MarketStress+=3; }}
-    ]
-  },
-
-  // === International 国际/贸易 ===
-  {
-    cat:'International', id:'retaliation_one', title:'报复性关税',
-    dynamicTarget:true, desc:(t)=>`${t.name} 宣布对美报复性关税。`,
+    ]},
+  {cat:'International', id:'retaliation_one', title:'报复性关税', dynamicTarget:true,
+    desc:(t)=>`${t.name} 宣布对美报复性关税。`,
     weight:(t)=> (100 - t.attitude) + t.trade_with_us + Math.min(30,t._recentTariffUp*2),
     opts:[
       {txt:'军事威慑（AP1）', cond: s=> s.AP>=1, eff: (s,t)=>{ s.AP-=1; s.IntlHate+=10; t.tariff=Math.max(0,t.tariff + Math.max(1, Math.floor(t._recentTariffUp/2)) - 3); }},
       {txt:'秘密谈判（DP2）', cond: s=> s.DP>=2, eff: (s,t)=>{ s.DP-=2; t.attitude = clamp(t.attitude+8,0,100); t.tariff=Math.max(0,t.tariff + Math.max(0, Math.floor(t._recentTariffUp/2)) - 5); }},
       {txt:'发推痛骂', eff: s=>{ s.Support+=4; s.IntlHate+=6; s.MarketStress+=4; }}
-    ]
-  },
-  {
-    cat:'International', id:'g20_pressure', title:'G20 集体施压',
-    cond: s=> averageTariffMajor()>=25,
+    ]},
+  {cat:'International', id:'g20_pressure', title:'G20 集体施压', cond: s=> averageTariffMajor()>=25,
     desc:'G20 伙伴对你的加税策略表达严重关切。',
     opts:[
       {txt:'公开反击', eff: s=>{ s.Support+=8; s.IntlHate+=12; }},
       {txt:'临时停战（全体-3）', eff: s=>{ countries.forEach(c=> c.tariff = Math.max(0, c.tariff-3)); s.Support-=3; s.DP+=1; }}
-    ]
-  },
-  {
-    cat:'International', id:'wto_case', title:'WTO 争端解决',
-    dynamicTarget:true, desc:(t)=>`${t.name} 向 WTO 提起申诉，指控你滥用关税。`,
-    weight:(t)=> 50 + (100-t.attitude),
-    opts:[
-      {txt:'法务应对（DP1）', cond:s=>s.DP>=1, eff:s=>{ s.DP-=1; s._policyBoostNext=(s._policyBoostNext||0)+0.1; }},
-      {txt:'拒绝合作', eff:s=>{ s.IntlHate+=6; s.Support+=2; }}
-    ]
-  },
-  {
-    cat:'International', id:'currency_shock', title:'目标国产品贬值冲击',
-    dynamicTarget:true, desc:(t)=>`${t.name} 货币快速贬值，出口竞争力上升，抵消你的关税效果。`,
-    weight:(t)=> t.trade_with_us,
-    opts:[
-      {txt:'追加关税（AP1）', cond:s=>s.AP>=1, eff:(s,t)=>{ s.AP-=1; t.tariff=clamp(t.tariff+5,0,100); s.MarketStress+=2; s.IntlHate+=3; }},
-      {txt:'干预汇率（DP2）', cond:s=>s.DP>=2, eff:s=>{ s.DP-=2; s.MarketStress-=2; s._policyBoostNext=(s._policyBoostNext||0)+0.2; }},
-      {txt:'无视', eff:s=>{ s.Support-=2; }}
-    ]
-  },
-  {
-    cat:'International', id:'supply_chain_break', title:'关键零部件断供',
-    dynamicTarget:true, desc:(t)=>`${t.name} 的关键部件断供影响美国制造业产线。`,
-    weight:(t)=> (t.resources||[]).includes('chips')?70:30,
-    opts:[
-      {txt:'动用国防生产法（AP1）', cond:s=>s.AP>=1, eff:s=>{ s.AP-=1; s.Support+=3; s.MarketStress-=2; }},
-      {txt:'放松该国关税（目标-5）', eff:(s,t)=>{ t.tariff=Math.max(0,t.tariff-5); s.Support-=2; }},
-      {txt:'全球寻找替代', eff:s=>{ s._policyBoostNext=(s._policyBoostNext||0)+0.2; }}
-    ]
-  },
-
-  // === Security 安全 ===
-  {
-    cat:'Security', id:'assass_premonition', title:'暗杀预兆',
-    cond: s=> s.IntlHate>=60,
+    ]},
+  {cat:'Security', id:'assass_premonition', title:'暗杀预兆', cond: s=> s.IntlHate>=60,
     desc:'安保部门截获潜在威胁线索。',
     opts:[
       {txt:'高压安保（AP2）', cond: s=> s.AP>=2, eff: s=>{ s.AP-=2; s.MarketStress+=3; s.assassBase = Math.max(0,(s.assassBase||0)-0.5); s._assShield=2; }},
       {txt:'低调处理', eff: s=>{ s.Support-=2; s.assassBase = Math.max(0,(s.assassBase||0)-0.2); }},
       {txt:'借题发挥造势', eff: s=>{ s.Support+=4; s.IntlHate+=4; s.assassBase = (s.assassBase||0)+0.2; }}
-    ]
-  },
-  {
-    cat:'Security', id:'cyber_attack', title:'大规模网络攻击',
-    desc:'政府与金融基础设施遭遇来自境外的网络攻击。',
-    opts:[
-      {txt:'溯源并制裁（AP1）', cond:s=>s.AP>=1, eff:s=>{ s.AP-=1; s.IntlHate+=6; s.Support+=2; }},
-      {txt:'提升防护（DP1）', cond:s=>s.DP>=1, eff:s=>{ s.DP-=1; s.MarketStress-=3; }},
-      {txt:'保持沉默', eff:s=>{ s.Support-=3; }}
-    ]
-  },
-  {
-    cat:'Security', id:'fonop_incident', title:'航行自由擦枪走火',
-    dynamicTarget:true, desc:(t)=>`与 ${t.name} 在敏感海域发生摩擦，局势紧张。`,
-    weight:(t)=> t.military || 40,
-    opts:[
-      {txt:'降级处置', eff:s=>{ s.Support-=2; s.IntlHate-=2; }},
-      {txt:'强硬护航（AP1）', cond:s=>s.AP>=1, eff:s=>{ s.AP-=1; s.Support+=3; s.IntlHate+=5; }}
-    ]
-  },
-
-  // === Diplomatic 外交 ===
-  {
-    cat:'Diplomatic', id:'phase_deal', title:'阶段性协议',
-    dynamicTarget:true, desc: (t)=>`与 ${t.name} 达成阶段性协议：市场准入换关税暂缓。`,
+    ]},
+  {cat:'Diplomatic', id:'phase_deal', title:'阶段性协议', dynamicTarget:true,
+    desc: (t)=>`与 ${t.name} 达成阶段性协议：市场准入换关税暂缓。`,
     weight: (t)=> t.trade_with_us + (t._recentTariffUp>0?20:0),
     opts:[
       {txt:'接受（目标-5  好感+10 支持-3）', eff:(s,t)=>{ t.tariff=Math.max(0,t.tariff-5); t.attitude=clamp(t.attitude+10,0,100); s.Support-=3; s._policyBoostNext=(s._policyBoostNext||0)+0.3; }},
       {txt:'拒绝（目标更强硬）', eff:(s,t)=>{ s.Support+=3; t._recentTariffUp += 5; }}
-    ]
-  },
-  {
-    cat:'Diplomatic', id:'opec_cut', title:'OPEC 计划减产',
-    desc:'产油国酝酿减产，油价或上涨影响通胀。',
-    opts:[
-      {txt:'释放战略石油储备', eff:s=>{ s.Support+=2; s.MarketStress-=2; }},
-      {txt:'游说增产（DP2）', cond:s=>s.DP>=2, eff:s=>{ s.DP-=2; s._policyBoostNext=(s._policyBoostNext||0)+0.2; }},
-      {txt:'提高燃油税抵消', eff:s=>{ s.Support-=3; s.MarketStress-=1; }}
-    ]
-  },
-
-  // === UN 联合国 ===
-  {
-    cat:'UN', id:'un_meeting', title:'联合国紧急会议',
-    cond: s=> s.IntlHate>=70,
+    ]},
+  {cat:'UN', id:'un_meeting', title:'联合国紧急会议', cond: s=> s.IntlHate>=70,
     desc:'多国提议就你的关税政策展开制裁表决。',
     opts:[
       {txt:'强硬演讲', eff: s=>{ s.Support+=6; s.IntlHate+=6; s._unPassBias = (s._unPassBias||0)+0.1; }},
       {txt:'私下游说（DP2）', cond: s=> s.DP>=2, eff: s=>{ s.DP-=2; s._unPassBias = Math.max(0,(s._unPassBias||0)-0.35); }}
     ],
     onResolve: (s)=>{
-      let base = 0.2 + (s.IntlHate-70)*0.01;
-      base += (s._unPassBias||0);
-      base = clamp(base,0.05,0.8);
-      if(Math.random()<base){
-        defeat('外交孤立','联合国通过对美制裁，你被迫下台。');
-      }else{
-        log(`联合国会议结束：<b>制裁未通过</b>。`);
-      }
-    }
-  }
+      let base = 0.2 + (s.IntlHate-70)*0.01; base += (s._unPassBias||0); base = clamp(base,0.05,0.8);
+      if(Math.random()<base){ defeat('外交孤立','联合国通过对美制裁，你被迫下台。'); } else { log(`联合国会议结束：<b>制裁未通过</b>。`); }
+    }}
 ];
 
+/* 五系链（与 v0.3 一致，省略注释） */
+const ARC_ENERGY=[{id:'energy_stage1',cat:'Diplomatic',title:'能源链·前因：OPEC 内部酝酿减产',cond:s=>s.arcEnergy===0&&s.IntlHate>=30,desc:'产油国讨论联合减产，油价预期走高。',opts:[
+  {txt:'释放战略石油储备（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.MarketStress-=2;s.Support+=1;s.arcEnergy=1;}},
+  {txt:'加大对产油国压力（DP1）',cond:s=>s.DP>=1,eff:s=>{s.DP-=1;s.IntlHate+=3;s.arcEnergy=1;}},
+  {txt:'无视',eff:s=>{s.MarketStress+=2;s.arcEnergy=1;}}]},
+{id:'energy_stage2',cat:'International',title:'能源链·升级：关键产油国宣布减产',cond:s=>s.arcEnergy===1,desc:'供给收缩推升油价与物流成本，通胀压力上升。',opts:[
+  {txt:'能源补贴（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.Support+=3;s.MarketStress-=1;s.arcEnergy=2;}},
+  {txt:'谈判增产（DP2）',cond:s=>s.DP>=2,eff:s=>{s.DP-=2;s._policyBoostNext=(s._policyBoostNext||0)+0.2;s.arcEnergy=2;}},
+  {txt:'征收能源附加税',eff:s=>{s.Support+=1;s.IntlHate+=5;s.arcEnergy=2;}}]},
+{id:'energy_stage3',cat:'Domestic',title:'能源链·终局：全国能源危机',cond:s=>s.arcEnergy===2,desc:'能源价格飙升引发民怨。',opts:[
+  {txt:'配给与限电（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.Support-=3;s.MarketStress-=4;s.US_GDP_Growth-=0.2;s.arcEnergy=3;}},
+  {txt:'全面救助（AP2）',cond:s=>s.AP>=2,eff:s=>{s.AP-=2;s.Support+=4;s.MarketStress-=6;s.US_GDP_Growth-=0.1;s.arcEnergy=3;}},
+  {txt:'甩锅国外',eff:s=>{s.Support+=2;s.IntlHate+=6;s.arcEnergy=3;}}]}];
+
+const ARC_TECH=[{id:'tech_stage1',cat:'International',title:'科技链·前因：强限制裁清单',cond:s=>s.arcTech===0&&averageTariffMajor()>=20,desc:'推动高端芯片/设备出口限制。',opts:[
+  {txt:'加码审查（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.Support+=2;s.IntlHate+=4;s.arcTech=1;}},
+  {txt:'留出豁免（DP1）',cond:s=>s.DP>=1,eff:s=>{s.DP-=1;s._policyBoostNext=(s._policyBoostNext||0)+0.1;s.arcTech=1;}},
+  {txt:'低调推进',eff:s=>{s.Support+=1;s.arcTech=1;}}]},
+{id:'tech_stage2',cat:'International',title:'科技链·升级：对等反制与断供',cond:s=>s.arcTech===1,desc:'对手限制稀土/设备出口。',opts:[
+  {txt:'以关税回应（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.IntlHate+=6;s.MarketStress+=2;s.arcTech=2;}},
+  {txt:'产业补贴（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.Support+=3;s._policyBoostNext=(s._policyBoostNext||0)+0.2;s.arcTech=2;}},
+  {txt:'技术换市场（DP2）',cond:s=>s.DP>=2,eff:s=>{s.DP-=2;s.Support-=2;s.IntlHate-=2;s.arcTech=2;}}]},
+{id:'tech_stage3',cat:'Domestic',title:'科技链·终局：半导体与高端设备脱钩',cond:s=>s.arcTech===2,desc:'供应链被迫重构。',opts:[
+  {txt:'全力国产替代（AP2）',cond:s=>s.AP>=2,eff:s=>{s.AP-=2;s.Support+=3;s.US_GDP_Growth-=0.1;s._policyBoostNext=(s._policyBoostNext||0)+0.3;s.arcTech=3;}},
+  {txt:'加大海外并购（DP2）',cond:s=>s.DP>=2,eff:s=>{s.DP-=2;s.MarketStress-=2;s.arcTech=3;}},
+  {txt:'容忍阵痛',eff:s=>{s.Support-=3;s.US_GDP_Growth-=0.2;s.arcTech=3;}}]}];
+
+const ARC_FOOD=[{id:'food_stage1',cat:'International',title:'粮食链·前因：主产国收成不佳',cond:s=>s.arcFood===0&&s.MarketStress>=20,desc:'多国考虑限制粮食出口。',opts:[
+  {txt:'紧急进口安排（DP1）',cond:s=>s.DP>=1,eff:s=>{s.DP-=1;s.MarketStress-=2;s.arcFood=1;}},
+  {txt:'压低国内关税（全体-1）',eff:s=>{countries.forEach(c=>c.tariff=Math.max(0,c.tariff-1));s.Support-=1;s.arcFood=1;}},
+  {txt:'无视',eff:s=>{s.Support-=1;s.arcFood=1;}}]},
+{id:'food_stage2',cat:'Domestic',title:'粮食链·升级：食品价格飙升',cond:s=>s.arcFood===1,desc:'民生压力上升。',opts:[
+  {txt:'发放食品券（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.Support+=4;s.arcFood=2;}},
+  {txt:'整顿囤积居奇（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.MarketStress-=3;s.arcFood=2;}},
+  {txt:'甩锅国际炒作',eff:s=>{s.IntlHate+=3;s.Support+=1;s.arcFood=2;}}]},
+{id:'food_stage3',cat:'Security',title:'粮食链·终局：骚乱与治安压力',cond:s=>s.arcFood===2,desc:'部分城市出现抢购与冲突。',opts:[
+  {txt:'维稳（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.Support-=1;s.MarketStress-=4;s.arcFood=3;}},
+  {txt:'加码补贴（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.Support+=3;s.US_GDP_Growth-=0.1;s.arcFood=3;}},
+  {txt:'强势言论',eff:s=>{s.Support+=2;s.IntlHate+=4;s.arcFood=3;}}]}];
+
+const ARC_SHIPPING=[{id:'shipping_stage1',cat:'Domestic',title:'航运链·前因：港口效率下滑',cond:s=>s.arcShipping===0&&s.MarketStress>=15,desc:'堆港加剧，班轮延误。',opts:[
+  {txt:'临时用兵/外包装卸（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.MarketStress-=2;s.arcShipping=1;}},
+  {txt:'谈判劳资（DP1）',cond:s=>s.DP>=1,eff:s=>{s.DP-=1;s.Support+=2;s.arcShipping=1;}},
+  {txt:'不处理',eff:s=>{s.Support-=2;s.arcShipping=1;}}]},
+{id:'shipping_stage2',cat:'Security',title:'航运链·升级：敏感航道摩擦',cond:s=>s.arcShipping===1,desc:'保险与运价迅速走高。',opts:[
+  {txt:'护航编队（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.Support+=2;s.IntlHate+=4;s.arcShipping=2;}},
+  {txt:'改道补贴（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.MarketStress-=3;s.arcShipping=2;}},
+  {txt:'外交降温（DP2）',cond:s=>s.DP>=2,eff:s=>{s.DP-=2;s.IntlHate-=2;s.arcShipping=2;}}]},
+{id:'shipping_stage3',cat:'International',title:'航运链·终局：全球运价暴涨',cond:s=>s.arcShipping===2,desc:'供应链成本全面上升。',opts:[
+  {txt:'对外统一运价协议（DP2）',cond:s=>s.DP>=2,eff:s=>{s.DP-=2;s._policyBoostNext=(s._policyBoostNext||0)+0.2;s.arcShipping=3;}},
+  {txt:'国内物流补贴（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.Support+=2;s.arcShipping=3;}},
+  {txt:'让市场自我修复',eff:s=>{s.Support-=2;s.US_GDP_Growth-=0.1;s.arcShipping=3;}}]}];
+
+const ARC_FINANCE=[{id:'fin_stage1',cat:'Domestic',title:'金融链·前因：信用收缩迹象',cond:s=>s.arcFinance===0&&(s.MarketStress>=20||s.US_GDP_Growth<0),desc:'银行收紧授信。',opts:[
+  {txt:'流动性支持（AP1）',cond:s=>s.AP>=1,eff:s=>{s.AP-=1;s.MarketStress-=3;s.arcFinance=1;}},
+  {txt:'观望',eff:s=>{s.Support-=2;s.arcFinance=1;}},
+  {txt:'甩锅美联储',eff:s=>{s.Support+=1;s.arcFinance=1;}}]},
+{id:'fin_stage2',cat:'Domestic',title:'金融链·升级：股债双杀',cond:s=>s.arcFinance===1,desc:'风险偏好坍塌。',opts:[
+  {txt:'救市组合拳（AP2）',cond:s=>s.AP>=2,eff:s=>{s.AP-=2;s.Support+=6;s.MarketStress-=6;s.arcFinance=2;}},
+  {txt:'窗口指导（DP1）',cond:s=>s.DP>=1,eff:s=>{s.DP-=1;s.MarketStress-=2;s.arcFinance=2;}},
+  {txt:'继续观望',eff:s=>{s.Support-=4;s.arcFinance=2;}}]},
+{id:'fin_stage3',cat:'Domestic',title:'金融链·终局：技术性衰退',cond:s=>s.arcFinance===2,desc:'连续两个季度增速为负。',opts:[
+  {txt:'强刺激（AP2）',cond:s=>s.AP>=2,eff:s=>{s.AP-=2;s.US_GDP_Growth+=0.3;s.Support+=4;s.arcFinance=3;}},
+  {txt:'定向纾困（DP2）',cond:s=>s.DP>=2,eff:s=>{s.DP-=2;s._policyBoostNext=(s._policyBoostNext||0)+0.3;s.arcFinance=3;}},
+  {txt:'严守财政纪律',eff:s=>{s.Support-=3;s.arcFinance=3;}}]}];
+
+const EVENT_POOL=[...BASE_EVENTS,...ARC_ENERGY,...ARC_TECH,...ARC_FOOD,...ARC_SHIPPING,...ARC_FINANCE];
+
+function computeEventWeights(){
+  const avgTar = averageTariffMajor();
+  const w_domestic = clamp(0.25 + state.MarketStress/200 + Math.max(0, -state.US_GDP_Growth)/10, 0.1, 0.6);
+  const w_international = clamp(0.25 + state.IntlHate/200 + avgTar/200, 0.1, 0.7);
+  const w_security = clamp(0.1 + state.IntlHate/300, 0.05, 0.4);
+  const w_diplomatic = clamp(0.2 + state.DP/50 - state.IntlHate/300, 0.05, 0.5);
+  const w_un = clamp(0.05 + state.IntlHate/400, 0.02, 0.25);
+  return {Domestic:w_domestic, International:w_international, Security:w_security, Diplomatic:w_diplomatic, UN:w_un};
+}
+
 function pickEvent(cats){
-  const order = [
-    {cat:'Domestic', w:cats.Domestic},
-    {cat:'International', w:cats.International},
-    {cat:'Security', w:cats.Security},
-    {cat:'Diplomatic', w:cats.Diplomatic},
-    {cat:'UN', w:cats.UN}
-  ];
+  const order=[{cat:'Domestic',w:cats.Domestic},{cat:'International',w:cats.International},{cat:'Security',w:cats.Security},{cat:'Diplomatic',w:cats.Diplomatic},{cat:'UN',w:cats.UN}];
   const cat = pickWeighted(order, x=>x.w)?.cat || 'Domestic';
   let pool = EVENT_POOL.filter(e=>e.cat===cat && (!e.cond || e.cond(state)));
-  if(pool.length===0){
-    pool = EVENT_POOL.filter(e=>(!e.cond || e.cond(state)));
-    if(pool.length===0) return null;
-  }
-  const cand = [];
+  if(pool.length===0){ pool = EVENT_POOL.filter(e=>(!e.cond || e.cond(state))); if(pool.length===0) return null; }
+  const cand=[];
   for(const e of pool){
     if(e.dynamicTarget){
       const target = pickWeighted(countries, t=>{
@@ -637,12 +650,19 @@ function pickEvent(cats){
         if(t._cooldowns[e.id]>0) w*=0.5;
         return Math.max(0,w);
       }) || countries[rnd(0,countries.length-1)];
-      cand.push({e, target});
-    }else{
-      cand.push({e, target:null});
-    }
+      cand.push({e,target});
+    }else cand.push({e,target:null});
   }
-  return cand.length? cand[rnd(0,cand.length-1)] : null;
+  const picked = pickWeighted(cand, x=>{
+    const id=x.e.id||''; let bias=1;
+    if(/energy_/.test(id)   && state.arcEnergy>0   && state.arcEnergy<3) bias=1.6;
+    if(/tech_/.test(id)     && state.arcTech>0     && state.arcTech<3) bias=1.6;
+    if(/food_/.test(id)     && state.arcFood>0     && state.arcFood<3) bias=1.6;
+    if(/shipping_/.test(id) && state.arcShipping>0 && state.arcShipping<3) bias=1.6;
+    if(/fin_/.test(id)      && state.arcFinance>0  && state.arcFinance<3) bias=1.6;
+    return bias;
+  });
+  return picked || (cand.length? cand[0]: null);
 }
 
 function triggerRandomEvent(cats){
@@ -659,62 +679,58 @@ function triggerRandomEvent(cats){
 }
 
 /* --------------------------
-   事件弹窗
+   事件弹窗（修复遮罩阻塞 & 支持手机）
 ---------------------------*/
 function openEventModal(e, target, ondone){
-  const title = document.querySelector('#evtTitle');
-  const desc = document.querySelector('#evtDesc');
-  const tnode = document.querySelector('#evtTarget');
-  const opts = document.querySelector('#evtOpts');
-
-  title.textContent = e.title;
-  desc.textContent = typeof e.desc==='function' ? e.desc(target||{}) : e.desc;
-  tnode.textContent = target? `目标国家：${target.name}（${target.code}）` : '';
+  document.getElementById('evtTitle').textContent = e.title;
+  document.getElementById('evtDesc').textContent = (typeof e.desc==='function'? e.desc(target||{}) : e.desc) || '';
+  document.getElementById('evtTarget').textContent = target? `目标国家：${target.name}（${target.code}）` : '';
+  const opts = document.getElementById('evtOpts');
   opts.innerHTML='';
-
   e.opts.forEach((o,i)=>{
-    const btn = document.createElement('div');
-    btn.className='opt';
+    const el = document.createElement('div'); el.className='opt';
     const allowed = !o.cond || !!o.cond(state, target);
-    btn.style.opacity = allowed? 1 : .5;
-    btn.innerHTML = `<div><b>${String.fromCharCode(65+i)}. ${o.txt}</b></div>` + (o.prev? `<div class="preview">${o.prev}</div>`:'');
-    btn.onclick = ()=>{
+    el.style.opacity = allowed? 1 : .5;
+    el.innerHTML = `<b>${String.fromCharCode(65+i)}. ${o.txt}</b>`;
+    el.onclick = ()=>{
       if(!allowed) return;
       if(typeof o.eff === 'function') o.eff(state,target);
       state.Support = clamp(state.Support,0,100);
       state.IntlHate = clamp(state.IntlHate,0,100);
       state.MarketStress = clamp(state.MarketStress,0,100);
       if(target){ target.attitude = clamp(target.attitude,0,100); target.tariff = clamp(target.tariff,0,100); }
+      log(`<b>${e.title}</b> → 选择：${o.txt}`);
       renderAll();
       closeEventModal();
       ondone && ondone();
     };
-    opts.appendChild(btn);
+    opts.appendChild(el);
   });
-
-  evtModal.style.display='flex';
+  evtModal.classList.add('show');
+  // 防止页面背景滚动
+  document.documentElement.style.overflow='hidden';
+  document.body.style.overflow='hidden';
 }
-function closeEventModal(){ evtModal.style.display='none'; }
-document.querySelector('#evtClose').onclick = closeEventModal;
+
+function closeEventModal(){
+  evtModal.classList.remove('show');
+  document.documentElement.style.overflow='';
+  document.body.style.overflow='';
+}
+function closeAllModals(){ closeEventModal(); endModal.classList.remove('show'); document.documentElement.style.overflow=''; document.body.style.overflow=''; }
 
 /* --------------------------
-   经济/风控结算
+   经济/风控结算 & 胜败
 ---------------------------*/
 function applyEconomy(){
-  const policyBoost = state._policyBoostNext || 0;
-  state._policyBoostNext = 0;
-
+  const policyBoost = state._policyBoostNext || 0; state._policyBoostNext = 0;
   const avgTar = averageTariffMajor();
   const nextGDP = (0.6) - avgTar*0.04 + policyBoost - state.MarketStress*0.03;
   state.US_GDP_Growth = +(nextGDP/10).toFixed(1);
-
   if(state.US_GDP_Growth<0){ state.gdpNegStreak += 1; } else { state.gdpNegStreak = 0; }
-
   state.Unemployment = +(state.Unemployment + Math.max(0, -state.US_GDP_Growth)/1.5 - 0.1*(state.Support/100) - 0.05);
   state.Unemployment = clamp(state.Unemployment,2.5,25);
-
   state.MarketStress = clamp(state.MarketStress + state.IntlHate/20 + rnd(-3,5), 0, 100);
-
   log(`季度结算：GDP ${fmtPct(state.US_GDP_Growth)}，失业率 ${state.Unemployment.toFixed(1)}%，市场压力 ${state.MarketStress.toFixed(0)}。`);
 }
 
@@ -723,11 +739,8 @@ function applyAssassination(){
   const base = 0.02 + (state.IntlHate-80)*0.006 + Math.max(0,30-state.Support)*0.002 + (state.assassBase||0);
   const shield = state._assShield? 0.5 : 0;
   const p = clamp(base - shield, 0.01, 0.5);
-  if(Math.random() < p){
-    defeat('被刺杀','一次致命袭击让你的任期戛然而止。');
-  }else{
-    log(`安保成功阻止了一次袭击（风险检定 ${Math.round(p*100)}% 未触发）。`);
-  }
+  if(Math.random() < p){ defeat('被刺杀','一次致命袭击让你的任期戛然而止。'); }
+  else { log(`安保成功阻止了一次袭击（风险检定 ${Math.round(p*100)}% 未触发）。`); }
   if(state._assShield) state._assShield -= 1;
 }
 
@@ -736,25 +749,13 @@ function applyImpeachment(){
   if(state.Support<25 && state.US_GDP_Growth<0){
     state.impeachProgress += 1;
     log(`弹劾推进：进度 ${state.impeachProgress}/3。`);
-    if(state.impeachProgress>=3){
-      defeat('被弹劾','众议院通过弹劾，你被迫下台。');
-    }
-  }else{
-    state.impeachProgress = Math.max(0, state.impeachProgress-1);
-  }
+    if(state.impeachProgress>=3){ defeat('被弹劾','众议院通过弹劾，你被迫下台。'); }
+  }else{ state.impeachProgress = Math.max(0, state.impeachProgress-1); }
 }
 
-/* --------------------------
-   胜败判定
----------------------------*/
-function checkImmediate(){
-  if(state.Support<=0) defeat('被弹劾','国内支持率跌至 0%，你被弹劾下台。');
-}
+function checkImmediate(){ if(state.Support<=0) defeat('被弹劾','国内支持率跌至 0%，你被弹劾下台。'); }
 function checkEndGame(){
-  if(state.gdpNegStreak>=3){
-    defeat('经济崩溃','GDP 连续三季度为负，美国经济陷入衰退。');
-    return;
-  }
+  if(state.gdpNegStreak>=3){ defeat('经济崩溃','GDP 连续三季度为负，美国经济陷入衰退。'); return; }
   const avg = averageTariffMajor();
   if(avg>=50 && state.Support>=30 && state.US_GDP_Growth>=0){
     victory('关税统治', `主要伙伴平均关税达到 ${avg.toFixed(1)}%，且国内与经济保持稳定。`);
@@ -764,39 +765,15 @@ function checkEndGame(){
 function victory(title, sub){
   endModal.querySelector('#endTitle').textContent = '胜利：'+title;
   endModal.querySelector('#endSub').textContent = sub;
-  endModal.style.display='flex';
+  endModal.classList.add('show');
+  document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden';
 }
 function defeat(title, sub){
   endModal.querySelector('#endTitle').textContent = '失败：'+title;
   endModal.querySelector('#endSub').textContent = sub;
-  endModal.style.display='flex';
+  endModal.classList.add('show');
+  document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden';
 }
-
-/* --------------------------
-   绑定 & 启动（修复：先抓 DOM，再渲染）
----------------------------*/
-window.addEventListener('DOMContentLoaded', ()=>{
-  listEl = document.querySelector('#countryList');
-  kpiEl = document.querySelector('#kpis');
-  logEl = document.querySelector('#log');
-  turnEl = document.querySelector('#turn');
-  apEl = document.querySelector('#ap');
-  dpEl = document.querySelector('#dp');
-  evtModal = document.querySelector('#evtModal');
-  endModal = document.querySelector('#endModal');
-
-  document.querySelector('#partnerBadge').onclick = (e)=>{
-    e.target.classList.toggle('on');
-    e.target.textContent = e.target.classList.contains('on')? '仅看主要伙伴' : '主要伙伴';
-    renderCountryList();
-  };
-  document.querySelector('#search').addEventListener('input', renderCountryList);
-  document.querySelector('#btnRestart').onclick = ()=>{ endModal.style.display='none'; resetGame(); };
-  document.querySelector('#again').onclick = ()=>{ endModal.style.display='none'; resetGame(); };
-  document.querySelector('#seeLog').onclick = ()=>{ endModal.style.display='none'; };
-
-  resetGame();
-});
 </script>
 </body>
 </html>
