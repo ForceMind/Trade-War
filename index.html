@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>Trade War｜总统贸易战原型</title>
+<title>Trade War｜总统贸易战</title>
 <style>
   :root{
     --bg:#0f1222; --panel:#171a2e; --muted:#8b92b7; --accent:#5ec7ff; --good:#3ad69b; --bad:#ff6b6b; --warn:#ffb020;
@@ -229,7 +229,8 @@ const DATA = { countries: [
 const INITIAL = {
   Support:55, IntlHate:20, US_GDP_Growth:0.7, Unemployment:4.0, MarketStress:18,
   AP:3, DP:2, turn:1, assassBase:0, impeachProgress:0, gdpNegStreak:0,
-  arcEnergy:0, arcTech:0, arcFood:0, arcShipping:0, arcFinance:0
+  arcEnergy:0, arcTech:0, arcFood:0, arcShipping:0, arcFinance:0,
+  warTriggered:false
 };
 
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
@@ -270,6 +271,7 @@ function resetGame(){
   selected = null;
   document.getElementById('search').value = '';
   document.getElementById('partnerBadge').classList.remove('on');
+  logEl.innerHTML = '';
   renderAll();
   log('<b>新局开始：</b> 目标：主要伙伴平均关税 ≥ 50%，且支持率与经济不崩。');
 }
@@ -278,6 +280,60 @@ function renderAll(){
   renderKPIs();
   renderCountryList();
   renderDetail();
+  if(typeof window.renderDomesticOps === 'function') window.renderDomesticOps();
+// 新增国内操作区渲染
+window.renderDomesticOps = function renderDomesticOps(){
+  // 每次渲染都移除旧的domesticOps，重新插入到#center末尾
+  const center = document.getElementById('center');
+  let oldDomOps = document.getElementById('domesticOps');
+  if(oldDomOps) oldDomOps.remove();
+  const domOps = document.createElement('section');
+  domOps.className = 'card';
+  domOps.id = 'domesticOps';
+  domOps.style.marginTop = '12px';
+  domOps.innerHTML = `<h2>国内操作</h2><div class="ops" id="domOpsBtns"></div>`;
+  center.appendChild(domOps);
+  const opsEl = domOps.querySelector('#domOpsBtns');
+  // 直接渲染所有国内操作按钮，始终可见
+  const btnFn = typeof window.btn === 'function' ? window.btn : function(txt,fn,cls=''){ const b=document.createElement('button'); b.className='btn '+cls; b.textContent=txt; b.addEventListener('click', fn, {passive:true}); return b; };
+  opsEl.appendChild(btnFn('发推特怒怼美联储（AP1）', window.actTweetFed, 'warn'));
+  opsEl.appendChild(btnFn('呼吁全民炒股（AP1）', window.actCallStock, 'good'));
+  opsEl.appendChild(btnFn('直播吃汉堡（AP1）', window.actBurger, 'good'));
+  opsEl.appendChild(btnFn('参加综艺节目（AP1）', window.actShow, 'good'));
+  opsEl.appendChild(btnFn('公开嘲讽对手（AP1）', window.actTaunt, 'warn'));
+  opsEl.appendChild(btnFn('组织爱国游行（AP1）', window.actParade, 'good'));
+  opsEl.appendChild(btnFn('号召买国货（AP1）', window.actBuyLocal, 'good'));
+  opsEl.appendChild(btnFn('亲自下场炒股（AP1）', window.actSelfStock, 'warn'));
+  opsEl.appendChild(btnFn('直播健身（AP1）', window.actFitness, 'good'));
+  opsEl.appendChild(btnFn('公开承诺减税（DP1）', window.actPromiseTax, 'good'));
+  opsEl.appendChild(btnFn('参加慈善晚宴（DP1）', window.actCharity, 'good'));
+  opsEl.appendChild(btnFn('直播宠物互动（AP1）', window.actPet, 'good'));
+  opsEl.appendChild(btnFn('公开演讲（AP1）', window.actSpeech, 'good'));
+  opsEl.appendChild(btnFn('派发补贴（AP2）', window.actSubsidy, 'good'));
+  opsEl.appendChild(btnFn('调查反对派（DP1）', window.actInvestigate, 'warn'));
+  opsEl.appendChild(btnFn('操控媒体（AP1）', window.actMedia, 'warn'));
+  opsEl.appendChild(btnFn('召开专家座谈（DP1）', window.actExpert, 'good'));
+  setOpsDisabledDomestic(opsEl);
+}
+
+function setOpsDisabledDomestic(opsEl){
+  const buttons = opsEl.querySelectorAll('.btn');
+  buttons.forEach(b=>b.disabled=false);
+  // AP类
+  if(state.AP<=0){
+    [...buttons].filter(b=>/AP1|AP2/.test(b.textContent)).forEach(b=>b.disabled=true);
+  }
+  if(state.AP<2){
+    [...buttons].filter(b=>/AP2/.test(b.textContent)).forEach(b=>b.disabled=true);
+  }
+  // DP类
+  if(state.DP<=0){
+    [...buttons].filter(b=>/DP1/.test(b.textContent)).forEach(b=>b.disabled=true);
+  }
+  if(state.DP<2){
+    [...buttons].filter(b=>/DP2/.test(b.textContent)).forEach(b=>b.disabled=true);
+  }
+}
 }
 
 function averageTariffMajor(){
@@ -296,6 +352,10 @@ function renderKPIs(){
     ${kpi('主要伙伴均关税', avgMajor+'%', avgMajor>=50?'good':'')}
   `;
   turnEl.textContent = state.turn;
+  // 显示天数和剩余任期
+  const day = state.turn;
+  const totalDays = 1460;
+  turnEl.textContent = `${day} / ${totalDays}`;
   apEl.textContent = state.AP;
   dpEl.textContent = state.DP;
   function kpi(title,val,cls=''){ return `<div class="kpi ${cls}"><div class="v">${val}</div><div class="t">${title}</div></div>`; }
@@ -312,12 +372,59 @@ function renderCountryList(){
   arr.forEach(c=>{
     const row = document.createElement('div');
     row.className='row';
-    row.addEventListener('click', ()=>{ selected=c; renderDetail(); if (document.body.classList.contains('drawer-open')) toggleDrawer(false); }, {passive:true});
+    row.addEventListener('click', ()=>{
+      selected=c;
+      if (document.body.classList.contains('drawer-open')) {
+        showCountryModal(c);
+      } else {
+        renderDetail();
+      }
+      if (document.body.classList.contains('drawer-open')) toggleDrawer(false);
+    }, {passive:true});
     const f = document.createElement('div'); f.className='flag'; f.style.background=colorTariff(c.tariff);
     const nm = document.createElement('div'); nm.className='nm'; nm.innerHTML = `<b>${c.name}</b> <span class="tag">(${c.code})</span>`;
     const r = document.createElement('div'); r.innerHTML = `<span class="badge" title="对美关税">${c.tariff}%</span>`;
     row.appendChild(f); row.appendChild(nm); row.appendChild(r); listEl.appendChild(row);
   });
+// 手机端弹窗显示国家详情
+function showCountryModal(country) {
+  const modal = document.createElement('div');
+  modal.className = 'modal show';
+  modal.style.zIndex = 100;
+  modal.innerHTML = `<div class="modal-inner"><div class="modal-head"><div class="modal-title">${country.name}（${country.code}）</div><div class="closeX">✕</div></div><div class="modal-body">${renderCountryDetailHTML(country)}<div class="ops" id="modalOps"></div></div></div>`;
+  document.body.appendChild(modal);
+  modal.querySelector('.closeX').onclick = ()=>{ document.body.removeChild(modal); };
+  // 操作按钮
+  const opsEl = modal.querySelector('#modalOps');
+  opsEl.appendChild(btn('加关税 +5', ()=>{ actRaiseTariff(5); document.body.removeChild(modal); }));
+  opsEl.appendChild(btn('加关税 +10', ()=>{ actRaiseTariff(10); document.body.removeChild(modal); }));
+  opsEl.appendChild(btn('秘密谈判（DP2）', ()=>{ actNegotiate(); document.body.removeChild(modal); }));
+  opsEl.appendChild(btn('舆论战（AP1）', ()=>{ actPropaganda(); document.body.removeChild(modal); }, 'warn'));
+  opsEl.appendChild(btn('军事威慑（AP1）', ()=>{ actThreaten(); document.body.removeChild(modal); }, 'bad'));
+  setOpsDisabledModal(opsEl);
+}
+
+function renderCountryDetailHTML(country) {
+  return `<div class="grid">
+    <div class="field"><div class="k">对美关税</div><div class="v">${country.tariff}%</div></div>
+    <div class="field"><div class="k">对美好感</div><div class="v">${country.attitude}</div></div>
+    <div class="field"><div class="k">贸易权重</div><div class="v">${country.trade_with_us}</div></div>
+    <div class="field"><div class="k">政体</div><div class="v">${country.regime}</div></div>
+    <div class="field"><div class="k">军事</div><div class="v">${country.military}</div></div>
+    <div class="field"><div class="k">稳定</div><div class="v">${country.stability}</div></div>
+  </div>`;
+}
+
+function setOpsDisabledModal(opsEl){
+  const buttons = opsEl.querySelectorAll('.btn');
+  buttons.forEach(b=>b.disabled=false);
+  if(state.AP<=0){
+    [...buttons].filter(b=>/加关税|舆论战|军事威慑/.test(b.textContent)).forEach(b=>b.disabled=true);
+  }
+  if(state.DP<2){
+    [...buttons].filter(b=>/秘密谈判/.test(b.textContent)).forEach(b=>b.disabled=true);
+  }
+}
   if(arr.length===0){
     const empty=document.createElement('div'); empty.className='row'; empty.style.opacity=.7; empty.textContent='（没有匹配的国家）'; listEl.appendChild(empty);
   }
@@ -346,15 +453,176 @@ function renderDetail(){
     <div class="ops" id="ops"></div>
   `;
   const opsEl = d.querySelector('#ops');
-  opsEl.appendChild(btn('加关税 +5', ()=>actRaiseTariff(5)));
-  opsEl.appendChild(btn('加关税 +10', ()=>actRaiseTariff(10)));
-  opsEl.appendChild(btn('秘密谈判（DP2）', actNegotiate));
-  opsEl.appendChild(btn('舆论战（AP1）', actPropaganda, 'warn'));
-  opsEl.appendChild(btn('军事威慑（AP1）', actThreaten, 'bad'));
+  const btnFn = typeof window.btn === 'function' ? window.btn : function(txt,fn,cls=''){ const b=document.createElement('button'); b.className='btn '+cls; b.textContent=txt; b.addEventListener('click', fn, {passive:true}); return b; };
+  opsEl.appendChild(btnFn('加关税 +5', ()=>actRaiseTariff(5)));
+  opsEl.appendChild(btnFn('加关税 +10', ()=>actRaiseTariff(10)));
+  opsEl.appendChild(btnFn('秘密谈判（DP2）', actNegotiate));
+  opsEl.appendChild(btnFn('舆论战（AP1）', actPropaganda, 'warn'));
+  opsEl.appendChild(btnFn('军事威慑（AP1）', actThreaten, 'bad'));
   setOpsDisabled();
+// 活灵活现国内操作实现
+window.actTweetFed = function actTweetFed(){
+  if(state.AP<=0) return;
+  state.AP--;
+  state.Support = clamp(state.Support + 2, 0, 100);
+  state.IntlHate = clamp(state.IntlHate + 2, 0, 100);
+  log('总统发推特怒怼美联储，支持者欢呼，国际媒体侧目。');
+  renderAll();
+  checkImmediate();
+}
+
+window.actCallStock = function actCallStock(){
+  if(state.AP<=0) return;
+  state.AP--;
+  state.Support = clamp(state.Support + 3, 0, 100);
+  state.MarketStress = clamp(state.MarketStress + 2, 0, 100);
+  log('总统呼吁全民炒股，市场热情高涨，风险也随之增加。');
+  renderAll();
+  checkImmediate();
+}
+
+window.actBurger = function actBurger(){
+  if(state.AP<=0) return;
+  state.AP--;
+  state.Support = clamp(state.Support + 2, 0, 100);
+  log('总统直播吃汉堡，亲民形象加分。');
+  renderAll();
+  checkImmediate();
+}
+
+window.actShow = function actShow(){
+  if(state.AP<=0) return;
+  state.AP--;
+  state.Support = clamp(state.Support + 2, 0, 100);
+  log('总统参加综艺节目，展现幽默一面，民众好感提升。');
+  renderAll();
+  checkImmediate();
+}
+
+window.actTaunt = function actTaunt(){
+  if(state.AP<=0) return;
+  state.AP--;
+  state.Support = clamp(state.Support + 1, 0, 100);
+  state.IntlHate = clamp(state.IntlHate + 3, 0, 100);
+  log('总统公开嘲讽对手，支持者叫好，国际关系紧张。');
+  renderAll();
+  checkImmediate();
+}
+
+window.actParade = function actParade(){
+  if(state.AP<=0) return;
+  state.AP--;
+  state.Support = clamp(state.Support + 3, 0, 100);
+  log('总统组织爱国游行，民众凝聚力提升。');
+  renderAll();
+  checkImmediate();
+}
+
+window.actBuyLocal = function actBuyLocal(){
+  if(state.AP<=0) return;
+  state.AP--;
+  state.Support = clamp(state.Support + 2, 0, 100);
+  state.US_GDP_Growth = +(state.US_GDP_Growth + 0.05).toFixed(2);
+  log('总统号召全民买国货，支持率和GDP小幅提升。');
+  renderAll();
+  checkImmediate();
+}
+
+window.actSelfStock = function actSelfStock(){
+  if(state.AP<=0) return;
+  state.AP--;
+  state.Support = clamp(state.Support + 1, 0, 100);
+  state.MarketStress = clamp(state.MarketStress + 3, 0, 100);
+  log('总统亲自下场炒股，网友热议，市场波动加剧。');
+  renderAll();
+  checkImmediate();
+}
+
+window.actFitness = function actFitness(){
+  if(state.AP<=0) return;
+  state.AP--;
+  state.Support = clamp(state.Support + 2, 0, 100);
+  log('总统直播健身，展现健康形象，民众好感提升。');
+  renderAll();
+  checkImmediate();
+}
+
+window.actPromiseTax = function actPromiseTax(){
+  if(state.DP<=0) return;
+  state.DP--;
+  state.Support = clamp(state.Support + 2, 0, 100);
+  log('总统公开承诺减税，民众期待，支持率提升。');
+  renderAll();
+}
+
+window.actCharity = function actCharity(){
+  if(state.DP<=0) return;
+  state.DP--;
+  state.Support = clamp(state.Support + 2, 0, 100);
+  log('总统参加慈善晚宴，形象加分，支持率提升。');
+  renderAll();
+}
+
+window.actPet = function actPet(){
+  if(state.AP<=0) return;
+  state.AP--;
+  state.Support = clamp(state.Support + 2, 0, 100);
+  log('总统直播宠物互动，网友纷纷点赞。');
+  renderAll();
+  checkImmediate();
+}
+  setOpsDisabled();
+// 国内操作实现
+window.actSpeech = function actSpeech(){
+  if(state.AP<=0) return;
+  state.AP -= 1;
+  state.Support = clamp(state.Support + 4, 0, 100);
+  state.MarketStress = clamp(state.MarketStress + 2, 0, 100);
+  log('总统发表公开演讲，提升支持率，但市场略感不安。');
+  renderAll();
+  checkImmediate();
+}
+
+window.actSubsidy = function actSubsidy(){
+  if(state.AP<2) return;
+  state.AP -= 2;
+  state.Support = clamp(state.Support + 7, 0, 100);
+  state.MarketStress = clamp(state.MarketStress + 3, 0, 100);
+  log('总统派发补贴，民众支持提升，但财政压力加大。');
+  renderAll();
+  checkImmediate();
+}
+
+window.actInvestigate = function actInvestigate(){
+  if(state.DP<1) return;
+  state.DP -= 1;
+  state.Support = clamp(state.Support + 2, 0, 100);
+  state.impeachProgress = Math.max(0, state.impeachProgress-1);
+  log('总统调查反对派，弹劾压力暂时减轻。');
+  renderAll();
+}
+
+window.actMedia = function actMedia(){
+  if(state.AP<=0) return;
+  state.AP -= 1;
+  state.Support = clamp(state.Support + 3, 0, 100);
+  state.IntlHate = clamp(state.IntlHate + 4, 0, 100);
+  log('总统操控媒体，提升国内支持，但国际仇恨增加。');
+  renderAll();
+  checkImmediate();
+}
+
+window.actExpert = function actExpert(){
+  if(state.DP<1) return;
+  state.DP -= 1;
+  state.Support = clamp(state.Support + 2, 0, 100);
+  state.US_GDP_Growth = +(state.US_GDP_Growth + 0.1).toFixed(1);
+  log('总统召开专家座谈会，支持率和GDP增速小幅提升。');
+  renderAll();
+}
 
   function fld(k,v){ return `<div class="field"><div class="k">${k}</div><div class="v">${v}</div></div>`;}
-  function btn(txt,fn,cls=''){ const b=document.createElement('button'); b.className='btn '+cls; b.textContent=txt; b.addEventListener('click', fn, {passive:true}); return b;}
+  window.btn = function btn(txt,fn,cls=''){ const b=document.createElement('button'); b.className='btn '+cls; b.textContent=txt; b.addEventListener('click', fn, {passive:true}); return b;}
 }
 
 function setOpsDisabled(){
@@ -449,6 +717,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.addEventListener('visibilitychange', ()=>{ if(document.hidden) stopAutoTurn(); else if(document.getElementById('autoTurn').checked) startAutoTurn(); });
 
   resetGame();
+  // 页面初始渲染时就插入国内操作区
+  setTimeout(renderDomesticOps, 0);
 });
 
 function startAutoTurn(){
@@ -516,7 +786,9 @@ const BASE_EVENTS = [
     desc:'市场恐慌蔓延，分析师质疑贸易战对供应链的冲击。',
     opts:[
       {txt:'救市（AP2）', cond: s=> s.AP>=2, eff: s=>{ s.AP-=2; s.Support+=6; s.MarketStress=Math.max(0,s.MarketStress-12); }},
-      {txt:'放任市场出清', eff: s=>{ s.Support-=8; s._policyBoostNext=(s._policyBoostNext||0)+0.4; }}
+      {txt:'放任市场出清', eff: s=>{ s.Support-=8; s._policyBoostNext=(s._policyBoostNext||0)+0.4; }},
+      {txt:'痛骂美联储', eff: s=>{ s.Support+=2; s.IntlHate+=2; log('总统公开痛骂美联储，试图甩锅。'); }},
+      {txt:'修改统计数据', eff: s=>{ s.Support+=3; s.US_GDP_Growth+=0.2; log('总统下令修改统计数据，GDP增速被美化。'); }}
     ]},
   {cat:'International', id:'retaliation_one', title:'报复性关税', dynamicTarget:true,
     desc:(t)=>`${t.name} 宣布对美报复性关税。`,
@@ -694,6 +966,8 @@ function openEventModal(e, target, ondone){
     el.innerHTML = `<b>${String.fromCharCode(65+i)}. ${o.txt}</b>`;
     el.onclick = ()=>{
       if(!allowed) return;
+      // 禁用所有选项，防止多次点击
+      Array.from(opts.children).forEach(optBtn=>{ optBtn.style.pointerEvents='none'; optBtn.style.opacity=0.6; });
       if(typeof o.eff === 'function') o.eff(state,target);
       state.Support = clamp(state.Support,0,100);
       state.IntlHate = clamp(state.IntlHate,0,100);
@@ -701,8 +975,8 @@ function openEventModal(e, target, ondone){
       if(target){ target.attitude = clamp(target.attitude,0,100); target.tariff = clamp(target.tariff,0,100); }
       log(`<b>${e.title}</b> → 选择：${o.txt}`);
       renderAll();
-      closeEventModal();
-      ondone && ondone();
+      setTimeout(closeEventModal, 120); // 确保弹窗关闭
+      if(ondone) setTimeout(ondone, 130);
     };
     opts.appendChild(el);
   });
@@ -756,6 +1030,27 @@ function applyImpeachment(){
 function checkImmediate(){ if(state.Support<=0) defeat('被弹劾','国内支持率跌至 0%，你被弹劾下台。'); }
 function checkEndGame(){
   if(state.gdpNegStreak>=3){ defeat('经济崩溃','GDP 连续三季度为负，美国经济陷入衰退。'); return; }
+  // 任期结束判定
+  if(state.turn > 1460){
+    // 检查是否所有国家都加过关税
+    const allRaised = countries.every(c=>c._recentTariffUp>0 || c.tariff>INITIAL.tariff);
+    if(!allRaised){
+      defeat('未完成加税','总统任期结束，但未对所有国家加关税。');
+      return;
+    }
+    if(state.Support>=30 && state.US_GDP_Growth>=0 && !state.warTriggered){
+      victory('任期圆满', '你成功完成了加税目标并保持稳定，没有爆发战争。');
+    } else {
+      defeat('任期结束','总统任期结束，但未能保持稳定或爆发战争。');
+    }
+    return;
+  }
+  // 战争判定
+  if(!state.warTriggered && countries.some(c=>c.attitude<=5 && c.tariff>=50)){
+    state.warTriggered = true;
+    defeat('战争爆发','你激怒了其他国家，爆发了战争，总统被迫下台。');
+    return;
+  }
   const avg = averageTariffMajor();
   if(avg>=50 && state.Support>=30 && state.US_GDP_Growth>=0){
     victory('关税统治', `主要伙伴平均关税达到 ${avg.toFixed(1)}%，且国内与经济保持稳定。`);
